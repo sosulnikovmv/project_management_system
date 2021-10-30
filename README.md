@@ -2,6 +2,6 @@
 Project management system
 
 # Creating environment
-conda create --name PM_project
-conda activate PM_project
+conda create --name PM
+conda activate PM python=3.7
 pip install -r requirements.txt
