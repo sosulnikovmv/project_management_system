@@ -1,5 +1,5 @@
-from math import log
 from .windows import AuthorizationWindow, ProfileWindow, ManagerRegistrationWindow
+from .user import Manager, Employee
 import os
 import pickle
 
@@ -93,10 +93,11 @@ class ProjectManagement():
                     self._credentials[login] = pass_md5
                     self._update_credentials()
                     self._users_data[login] = dict()
-                    self._users_data['name'] = name
-                    self._users_data['position'] = position
-                    self._users_data['email'] = email
-                    self._users_data['role'] = 'manager'
+                    self._users_data[login]['login'] = login
+                    self._users_data[login]['name'] = name
+                    self._users_data[login]['position'] = position
+                    self._users_data[login]['email'] = email
+                    self._users_data[login]['role'] = 'manager'
                     self._update_users_data()
                 
         
@@ -112,7 +113,9 @@ class ProjectManagement():
                 wrong_login_or_pw_flag = True
 
         # Profile window
-        profile_window = ProfileWindow(login)
+        if self._users_data[login]['role'] == 'manager':
+            current_user = Manager(**self._users_data[login])
+        profile_window = ProfileWindow(current_user)
         profile_window.open()
 
     def _update_credentials(self):

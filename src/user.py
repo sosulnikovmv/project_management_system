@@ -1,15 +1,16 @@
 class User():
-    def __init__(self, login, name, position, email) -> None:
+    def __init__(self, login, name, position, email, role) -> None:
         self._login = login
-        self._name = name
-        self._position = position
-        self._email = email
+        self.name = name
+        self.position = position
+        self.email = email
+        self.role = role
 
 class Manager(User):
-    def __init__(self, login, name, position, email) -> None:
-        super(self, Manager).__init__(login, name, position, email)
+    def __init__(self, login, name, position, email, role) -> None:
+        super(Manager, self).__init__(login, name, position, email, role)
 
 class Employee(User):
-    def __init__(self, login, name, position, email) -> None:
-        super(self, Employee).__init__(login, name, position, email)
+    def __init__(self, login, name, position, email, role) -> None:
+        super(Employee, self).__init__(login, name, position, email, role)
         

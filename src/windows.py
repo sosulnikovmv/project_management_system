@@ -45,12 +45,18 @@ class AuthorizationWindow(AppWindow):
                 return login, pass_md5
 
 class ProfileWindow(AppWindow):
-    def __init__(self, name) -> None:
-        layouts = [
-            [
-                sg.Text('Добро пожаловать, {}!'.format(name)), sg.Exit('Выход')
+    def __init__(self, user) -> None:
+        self.user = user
+        if self.user.role == 'manager':
+            layouts = [
+                [
+                    sg.Text('Добро пожаловать, {}!'.format(self.user.name)), sg.Exit('Выход')
+                ]
             ]
-        ]
+        elif self.user.role == 'employee':
+            pass
+        else:
+            raise NotImplementedError
         super(ProfileWindow, self).__init__(layouts)
 
     def open(self):
