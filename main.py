@@ -1,8 +1,10 @@
-import PySimpleGUI as sg
+from src.project_management import ProjectManagement
 
 
 def main():
-    pass
+    
+    application = ProjectManagement()
+    application.start()
 
 if __name__ == '__main__':
     main()
