@@ -61,22 +61,38 @@ class ProfileWindow(AppWindow):
                 exit()
 
 class ManagerRegistrationWindow(AppWindow):
-    def __init__(self, inappropriate_login_flag=False) -> None:
+    def __init__(self, inappropriate_login_flag=False, inappropriate_name_flag=False, inappropriate_email_flag=False, login_to_show='manager', name_to_show='', position_to_show='Менеджер', email_to_show='') -> None:
+        error_message = ''
+        if inappropriate_login_flag:
+            error_message += 'Ошибка: этот логин использовать нельзя!\n'
+        if inappropriate_name_flag:
+            error_message += 'Ошибка: Имя должно содержать только буквы!\n'
+        if inappropriate_email_flag:
+            error_message += 'Ошибка: E-mail указан неверно!'
         layouts = [
             [
                 sg.Text('Необходимо создать учётную запись менеджера')
             ],
             [
-                sg.Text('Введите логин и пароль:')
+                sg.Text('Введите данные:')
             ],
             [
-                sg.Text('Логин\t'), sg.InputText('manager', key='login')
+                sg.Text('Логин\t  '), sg.InputText(login_to_show, key='login')
             ],
             [
-                sg.Text('Пароль\t'), sg.InputText(key='pass', password_char='*')
+                sg.Text('Пароль\t  '), sg.InputText(key='pass', password_char='*')
             ],
             [
-                sg.Text('Ошибка: этот логин использовать нельзя!', text_color='orange') if inappropriate_login_flag else sg.Text()
+                sg.Text('Имя\t  '), sg.InputText(name_to_show, key='name')
+            ],
+            [
+                sg.Text('Должность'), sg.InputText(position_to_show, key='position')
+            ],
+            [
+                sg.Text('E-mail\t  '), sg.InputText(email_to_show, key='email')
+            ],
+            [
+                sg.Text(error_message, text_color='orange')
             ],
             [
                 sg.Submit('Зарегистрировать'), sg.Exit('Выход')
@@ -91,6 +107,5 @@ class ManagerRegistrationWindow(AppWindow):
                 exit()
             elif event == 'Зарегистрировать':
                 pass_md5 = hashlib.md5(bytes(values['pass'].encode())).hexdigest()
-                login = values['login']
                 window.close()
-                return login, pass_md5
+                return values['login'], pass_md5, values['name'], values['position'], values['email']
