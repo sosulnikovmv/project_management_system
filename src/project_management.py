@@ -97,6 +97,7 @@ class ProjectManagement():
                     self._users_data['position'] = position
                     self._users_data['email'] = email
                     self._users_data['role'] = 'manager'
+                    self._update_users_data()
                 
         
         # Authorization
@@ -117,4 +118,9 @@ class ProjectManagement():
     def _update_credentials(self):
         with open(self._credentials_path, 'wb') as f:
             data = pickle.dumps(self._credentials)
+            f.write(data)       
+    
+    def _update_users_data(self):
+        with open(self._users_data_path, 'wb') as f:
+            data = pickle.dumps(self._users_data)
             f.write(data)       
