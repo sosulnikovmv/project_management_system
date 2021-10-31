@@ -26,11 +26,23 @@ class ProjectManagement():
             reg_flag = True
             inappropriate_login_flag = False
             inappropriate_name_flag = False
+            inappropriate_email_flag = False
             name_to_show = ''
             login_to_show = 'manager'
+            position_to_show = 'Менеджер'
+            email_to_show = ''
             while reg_flag:
-                reg_manager_window = ManagerRegistrationWindow(inappropriate_login_flag=inappropriate_login_flag, inappropriate_name_flag=inappropriate_name_flag, login_to_show=login_to_show, name_to_show=name_to_show)
+                reg_manager_window = ManagerRegistrationWindow(
+                    inappropriate_login_flag=inappropriate_login_flag, 
+                    inappropriate_name_flag=inappropriate_name_flag, 
+                    inappropriate_email_flag=inappropriate_email_flag,
+                    login_to_show=login_to_show, 
+                    name_to_show=name_to_show,
+                    position_to_show=position_to_show,
+                    email_to_show=email_to_show
+                )
                 login, pass_md5, name, position, email = reg_manager_window.open()
+
                 # Check login
                 if login != '__manager_login__':
                     inappropriate_login_flag = False
@@ -55,17 +67,41 @@ class ProjectManagement():
                     del temp_name
                     name_to_show = name
                 
+                # Set position to show
+                position_to_show = position
+
+                # Check email
+                email_to_show = email
+                email = email.split('@')
+                if len(email) == 2:
+                    email[-1] = email[-1].split('.')
+                    if len(email[1]) == 2 and email[0] and email[1][0] and email[1][1]:
+                        temp_email = email[0].lower() + '@' + email[1][0].lower() + '.' + email[1][1].lower()
+                        email = temp_email
+                        del temp_email
+                        email_to_show = email
+                        inappropriate_email_flag = False
+                    else:
+                        inappropriate_email_flag = True
+                else:
+                    inappropriate_email_flag = True
+
                 # Check all errors
-                if not inappropriate_login_flag and not inappropriate_name_flag:
+                if not inappropriate_login_flag and not inappropriate_name_flag and not inappropriate_email_flag:
                     reg_flag = False
                     self._credentials['__manager_login__'] = login
                     self._credentials[login] = pass_md5
                     self._update_credentials()
+                    self._users_data[login] = dict()
+                    self._users_data['name'] = name
+                    self._users_data['position'] = position
+                    self._users_data['email'] = email
+                    self._users_data['role'] = 'manager'
                 
         
         # Authorization
         auth_flag = True
-        wrong_login_or_pw = False
+        wrong_login_or_pw_flag = False
         while auth_flag:
             authorization_window = AuthorizationWindow(wrong_login_or_pw_flag=wrong_login_or_pw_flag)
             login, pass_md5 = authorization_window.open()
