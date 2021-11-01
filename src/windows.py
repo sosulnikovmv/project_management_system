@@ -34,13 +34,13 @@ class AuthorizationWindow(AppWindow):
                 sg.Text('', text_color='orange', key='error_message')
             ],
             [
-                sg.Submit('Вход', key='submit'), sg.Exit('Выход', key='exit')
+                sg.Submit('Войти', key='submit')
             ]
         ]
         super(AuthorizationWindow, self).__init__(layouts)
 
     def open(self):
-        self._window = sg.Window(self._app_name, self._layouts)
+        self._window = sg.Window(self._app_name, self._layouts, size=(416, 240), resizable=True)
 
     def read(self):
         while True:
@@ -61,11 +61,11 @@ class AuthorizationWindow(AppWindow):
 
 class ProfileWindow(AppWindow):
     def __init__(self, user) -> None:
-        self.user = user
-        if self.user.role == 'manager':
+        self._user = user
+        if self._user.role == 'manager':
             layouts = [
                 [
-                    sg.Text('Здравствуйте, {}!'.format(self.user.name))
+                    sg.Text('Здравствуйте, {}!'.format(self._user.name))
                 ],
                 [
                     sg.Button('Создать пользователя', key='create_user')
@@ -80,13 +80,13 @@ class ProfileWindow(AppWindow):
                     sg.Button('Исполнители', key='employees')
                 ],
                 [
-                    sg.Exit('Выход')
+                    sg.Exit('Выход', key='logout')
                 ]
             ]
-        elif self.user.role == 'employee':
+        elif self._user.role == 'employee':
             layouts = [
                 [
-                    sg.Text('Здравствуйте, {}!'.format(self.user.name))
+                    sg.Text('Здравствуйте, {}!'.format(self._user.name))
                 ],
                 [
                     sg.Button('Проекты', key='projects')
@@ -95,7 +95,7 @@ class ProfileWindow(AppWindow):
                     sg.Button('Задачи', key='tasks')
                 ],
                 [
-                    sg.Exit('Выход')
+                    sg.Exit('Выход', key='logout')
                 ]
             ]
         else:
@@ -103,17 +103,24 @@ class ProfileWindow(AppWindow):
         super(ProfileWindow, self).__init__(layouts)
 
     def open(self) -> None:
-        window = sg.Window(self._app_name, self._layouts)
+        self._window = sg.Window(self._app_name, self._layouts, size=(416, 240), resizable=True)
+    
+    def read(self) -> str:
         while True:
-            event, values = window.read()
-            if event == 'Выход' or window.was_closed():
+            event, values = self._window.read()
+            if event == 'exit' or self._window.was_closed():
                 exit()
+            else:
+                return event
+    
+    def close(self) -> None:
+        self._window.close()
 
-class ManagerRegistrationWindow(AppWindow):
-    def __init__(self, login_to_show = 'manager', name_to_show = '', position_to_show = 'Менеджер', email_to_show = '') -> None:        
+class RegistrationWindow(AppWindow):
+    def __init__(self, role, login_to_show = 'manager', name_to_show = '', position_to_show = 'Менеджер', email_to_show = '') -> None:        
         layouts = [
             [
-                sg.Text('Необходимо создать учётную запись менеджера')
+                sg.Text('Необходимо создать учётную запись менеджера' if role == 'manager' else 'Создание учётной записи сотрудника')
             ],
             [
                 sg.Text('Введите данные:')
@@ -137,19 +144,21 @@ class ManagerRegistrationWindow(AppWindow):
                 sg.Text('', text_color='orange', key='error_message')
             ],
             [
-                sg.Submit('Зарегистрировать', key='submit'), sg.Exit('Выход', key='exit')
+                sg.Submit('Зарегистрировать', key='submit'), sg.Exit('Выход' if role == 'manager' else 'В главное меню', key='exit' if role == 'manager' else 'main_menu')
             ]
         ]
-        super(ManagerRegistrationWindow, self).__init__(layouts)
+        super(RegistrationWindow, self).__init__(layouts)
     
     def open(self) -> None:
-        self._window = sg.Window(self._app_name, self._layouts)        
+        self._window = sg.Window(self._app_name, self._layouts, size=(416, 240), resizable=True)        
     
     def read(self):
         while True:
             event, values = self._window.read()
             if event == 'exit' or self._window.was_closed():
                 exit()
+            elif event == 'main_menu':
+                return event, None, None, None, None, None
             elif event == 'submit':
                 pass_md5 = hashlib.md5(bytes(values['pass'].encode())).hexdigest()
                 return values['login'], pass_md5, values['name'], values['position'], values['email']

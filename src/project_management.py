@@ -1,4 +1,4 @@
-from .windows import AuthorizationWindow, ProfileWindow, ManagerRegistrationWindow
+from .windows import AuthorizationWindow, ProfileWindow, RegistrationWindow
 from .user import Manager, Employee
 import os
 import pickle
@@ -9,6 +9,7 @@ class ProjectManagement():
         self._credentials = dict()
         self._users_data_path = os.path.join('./data', 'users_data.dat')
         self._users_data = dict()
+        self._current_user = None
         if os.path.exists(self._credentials_path):
             with open(self._credentials_path, 'rb') as f:
                 data = f.read()
@@ -20,18 +21,36 @@ class ProjectManagement():
             
     
     def start(self) -> None:
+        # Create manager user if he is not created
+        self._create_manager()
+        
+        # Application working loop
+        event = 'logout'
+        while True:
+            event = self._action(event)
 
-        # Initial manager account registration
-        self._initial_manager_account_registration()
-                
+    def _action(self, event) -> str:
         # Authorization
-        login = self._authorization()
+        if event == 'logout':
+            login = self._authorization()
+            if self._users_data[login]['role'] == 'manager':
+                self._current_user = Manager(**self._users_data[login])
+            elif self._users_data[login]['role'] == 'employee':
+                self._current_user = Employee(**self._users_data[login])
+            return 'main_menu'
+        
+        # Main menu
+        elif event == 'main_menu':
+            return self._main_menu(self._current_user)
 
-        # Profile window
-        if self._users_data[login]['role'] == 'manager':
-            current_user = Manager(**self._users_data[login])
-        profile_window = ProfileWindow(current_user)
-        profile_window.open()
+        # Create user
+        elif event == 'create_user':
+            event = self._create_user(role='employee')
+            return 'main_menu'
+        
+        else:
+            raise NotImplementedError
+        
 
     def _authorization(self) -> str:
         authorization_window = AuthorizationWindow()
@@ -45,45 +64,64 @@ class ProjectManagement():
         authorization_window.close()
         return login
     
-    def _initial_manager_account_registration(self) -> None:
+    def _create_manager(self) -> None:
         if '__manager_login__' not in self._credentials or self._credentials['__manager_login__'] not in self._credentials:
-            inappropriate_login_flag = False
-            inappropriate_name_flag = False
-            inappropriate_email_flag = False
-            reg_manager_window = ManagerRegistrationWindow()
-            reg_manager_window.open()
-            while True:
-                login, pass_md5, name, position, email = reg_manager_window.read()
-
-                # Check login
-                inappropriate_login_flag = login == '__manager_login__'
-                
-                # Check and update name
-                name, inappropriate_name_flag = self._check_and_update_name(name)
-                reg_manager_window.update('name', name)                
-                
-                # Check and update email
-                email, inappropriate_email_flag = self._check_and_update_email(email)
-                reg_manager_window.update('email', email)
-
-                # Check all errors
-                if not inappropriate_login_flag and not inappropriate_name_flag and not inappropriate_email_flag:
-                    self._credentials['__manager_login__'] = login
-                    self._credentials[login] = pass_md5
-                    self._update_credentials()
-                    self._users_data[login] = dict()
-                    self._users_data[login]['login'] = login
-                    self._users_data[login]['name'] = name
-                    self._users_data[login]['position'] = position
-                    self._users_data[login]['email'] = email
-                    self._users_data[login]['role'] = 'manager'
-                    self._update_users_data()
-                    break
-                else:
-                    error_message = self._create_error_message(inappropriate_login_flag, inappropriate_name_flag, inappropriate_email_flag)
-                    reg_manager_window.error(error_message=error_message)
-            reg_manager_window.close()
+            _ = self._create_user(role='manager')
     
+    def _create_user(self, role: str = 'emploee') -> None:
+        inappropriate_login_flag = False
+        inappropriate_name_flag = False
+        inappropriate_email_flag = False
+        registration_window = RegistrationWindow(
+            role=role,
+            login_to_show='manager' if role == 'manager' else '', 
+            position_to_show='Менеджер' if role == 'manager' else 'Сотрудник'
+        )
+        registration_window.open()
+        while True:
+            event, login, pass_md5, name, position, email = registration_window.read()
+
+            # Turn back to main menu
+            if event == 'main_menu':
+                break
+
+            # Check login
+            inappropriate_login_flag = login == '__manager_login__' or login in self._credentials
+            
+            # Check and update name
+            name, inappropriate_name_flag = self._check_and_update_name(name)
+            registration_window.update('name', name)                
+            
+            # Check and update email
+            email, inappropriate_email_flag = self._check_and_update_email(email)
+            registration_window.update('email', email)
+
+            # Check all errors
+            if not inappropriate_login_flag and not inappropriate_name_flag and not inappropriate_email_flag:
+                self._credentials['__manager_login__'] = login
+                self._credentials[login] = pass_md5
+                self._update_credentials()
+                self._users_data[login] = dict()
+                self._users_data[login]['login'] = login
+                self._users_data[login]['name'] = name
+                self._users_data[login]['position'] = position
+                self._users_data[login]['email'] = email
+                self._users_data[login]['role'] = role
+                self._update_users_data()
+                break
+            else:
+                error_message = self._create_error_message(inappropriate_login_flag, inappropriate_name_flag, inappropriate_email_flag)
+                registration_window.error(error_message=error_message)
+        registration_window.close()
+        return event
+
+    def _main_menu(self, user):
+        profile_window = ProfileWindow(user)
+        profile_window.open()
+        event = profile_window.read()
+        profile_window.close()
+        return event
+
     def _check_and_update_name(self, name: str) -> tuple:
         # For empty name
         if not name:
@@ -123,7 +161,7 @@ class ProjectManagement():
     def _create_error_message(self, inappropriate_login_flag: bool, inappropriate_name_flag: bool, inappropriate_email_flag: bool) -> str:
         error_message = ''
         if inappropriate_login_flag:
-            error_message += 'Ошибка: этот логин использовать нельзя!\n'
+            error_message += 'Ошибка: этот логин занят!\n'
         if inappropriate_name_flag:
             error_message += 'Ошибка: Имя должно содержать только буквы!\n'
         if inappropriate_email_flag:
