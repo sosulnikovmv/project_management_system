@@ -50,11 +50,39 @@ class ProfileWindow(AppWindow):
         if self.user.role == 'manager':
             layouts = [
                 [
-                    sg.Text('Добро пожаловать, {}!'.format(self.user.name)), sg.Exit('Выход')
+                    sg.Text('Добро пожаловать, {}!'.format(self.user.name))
+                ],
+                [
+                    sg.Button('Создать пользователя', key='create_user')
+                ],
+                [
+                    sg.Button('Проекты', key='projects')
+                ],
+                [
+                    sg.Button('Задачи', key='tasks')
+                ],
+                [
+                    sg.Button('Исполнители', key='employees')
+                ],
+                [
+                    sg.Exit('Выход')
                 ]
             ]
         elif self.user.role == 'employee':
-            pass
+            layouts = [
+                [
+                    sg.Text('Добро пожаловать, {}!'.format(self.user.name))
+                ],
+                [
+                    sg.Button('Проекты', key='projects')
+                ],
+                [
+                    sg.Button('Задачи', key='tasks')
+                ],
+                [
+                    sg.Exit('Выход')
+                ]
+            ]
         else:
             raise NotImplementedError
         super(ProfileWindow, self).__init__(layouts)
