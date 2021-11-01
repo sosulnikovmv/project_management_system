@@ -2,21 +2,24 @@ import PySimpleGUI as sg
 import hashlib
 
 class AppWindow():
-    def __init__(self, layouts) -> None:
+    def __init__(self, layouts: list) -> None:
         self._layouts = layouts
         self._app_name = 'Менеджер проектов'
+
     def open(self):
         pass
+
     def read(self):
         pass
-    def close():
+
+    def close(self):
+        pass
+
+    def error(self):
         pass
 
 class AuthorizationWindow(AppWindow):
-    def __init__(self, wrong_login_or_pw_flag=False) -> None:
-        error_message = ''
-        if wrong_login_or_pw_flag:
-            error_message = 'Ошибка: неверный логин или пароль!'
+    def __init__(self) -> None:
         layouts = [
             [
                 sg.Text('Авторизация. Введите логин и пароль:')
@@ -28,7 +31,7 @@ class AuthorizationWindow(AppWindow):
                 sg.Text('Пароль\t'), sg.InputText(key='pass', password_char='*')
             ],
             [
-                sg.Text(error_message, text_color='orange', key='error_message')
+                sg.Text('', text_color='orange', key='error_message')
             ],
             [
                 sg.Submit('Вход', key='submit'), sg.Exit('Выход', key='exit')
@@ -37,12 +40,12 @@ class AuthorizationWindow(AppWindow):
         super(AuthorizationWindow, self).__init__(layouts)
 
     def open(self):
-        self.window = sg.Window(self._app_name, self._layouts)
+        self._window = sg.Window(self._app_name, self._layouts)
 
     def read(self):
         while True:
-            event, values = self.window.read()
-            if event == 'exit' or self.window.was_closed():
+            event, values = self._window.read()
+            if event == 'exit' or self._window.was_closed():
                 exit()
             elif event == 'submit':
                 pass_md5 = hashlib.md5(bytes(values['pass'].encode())).hexdigest()
@@ -50,10 +53,10 @@ class AuthorizationWindow(AppWindow):
                 return login, pass_md5
     
     def error(self):
-        self.window.Elem('error_message').Update(value='Ошибка: неверный логин или пароль!')
+        self._window.Elem('error_message').Update(value='Ошибка: неверный логин или пароль!')
 
     def close(self):
-        self.window.close()
+        self._window.close()
 
 
 class ProfileWindow(AppWindow):
@@ -99,7 +102,7 @@ class ProfileWindow(AppWindow):
             raise NotImplementedError
         super(ProfileWindow, self).__init__(layouts)
 
-    def open(self):
+    def open(self) -> None:
         window = sg.Window(self._app_name, self._layouts)
         while True:
             event, values = window.read()
@@ -107,14 +110,7 @@ class ProfileWindow(AppWindow):
                 exit()
 
 class ManagerRegistrationWindow(AppWindow):
-    def __init__(self, inappropriate_login_flag=False, inappropriate_name_flag=False, inappropriate_email_flag=False, login_to_show='manager', name_to_show='', position_to_show='Менеджер', email_to_show='') -> None:
-        error_message = ''
-        if inappropriate_login_flag:
-            error_message += 'Ошибка: этот логин использовать нельзя!\n'
-        if inappropriate_name_flag:
-            error_message += 'Ошибка: Имя должно содержать только буквы!\n'
-        if inappropriate_email_flag:
-            error_message += 'Ошибка: E-mail указан неверно!'
+    def __init__(self, login_to_show = 'manager', name_to_show = '', position_to_show = 'Менеджер', email_to_show = '') -> None:        
         layouts = [
             [
                 sg.Text('Необходимо создать учётную запись менеджера')
@@ -138,20 +134,31 @@ class ManagerRegistrationWindow(AppWindow):
                 sg.Text('E-mail\t  '), sg.InputText(email_to_show, key='email')
             ],
             [
-                sg.Text(error_message, text_color='orange')
+                sg.Text('', text_color='orange', key='error_message')
             ],
             [
-                sg.Submit('Зарегистрировать'), sg.Exit('Выход')
+                sg.Submit('Зарегистрировать', key='submit'), sg.Exit('Выход', key='exit')
             ]
         ]
         super(ManagerRegistrationWindow, self).__init__(layouts)
-    def open(self):
-        window = sg.Window(self._app_name, self._layouts)
+    
+    def open(self) -> None:
+        self._window = sg.Window(self._app_name, self._layouts)        
+    
+    def read(self):
         while True:
-            event, values = window.read()
-            if event == 'Выход' or window.was_closed():
+            event, values = self._window.read()
+            if event == 'exit' or self._window.was_closed():
                 exit()
-            elif event == 'Зарегистрировать':
+            elif event == 'submit':
                 pass_md5 = hashlib.md5(bytes(values['pass'].encode())).hexdigest()
-                window.close()
                 return values['login'], pass_md5, values['name'], values['position'], values['email']
+
+    def error(self, error_message: str) -> None:
+        self._window.Find('error_message', error_message).Update(value=error_message)
+    
+    def close(self) -> None:
+        self._window.close()
+
+    def update(self, field: str, value: str) -> None:
+        self._window.Find(field).Update(value=value)

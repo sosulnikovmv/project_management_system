@@ -4,7 +4,7 @@ import os
 import pickle
 
 class ProjectManagement():
-    def __init__(self):
+    def __init__(self) -> None:
         self._credentials_path = os.path.join('./data', 'credentials.dat')
         self._credentials = dict()
         self._users_data_path = os.path.join('./data', 'users_data.dat')
@@ -19,76 +19,55 @@ class ProjectManagement():
                 self._users_data = pickle.loads(data)
             
     
-    def start(self):
+    def start(self) -> None:
 
         # Initial manager account registration
+        self._initial_manager_account_registration()
+                
+        # Authorization
+        login = self._authorization()
+
+        # Profile window
+        if self._users_data[login]['role'] == 'manager':
+            current_user = Manager(**self._users_data[login])
+        profile_window = ProfileWindow(current_user)
+        profile_window.open()
+
+    def _authorization(self) -> str:
+        authorization_window = AuthorizationWindow()
+        authorization_window.open()
+        while True:
+            login, pass_md5 = authorization_window.read()
+            if login in self._credentials and self._credentials[login] == pass_md5:
+                break
+            else:
+                authorization_window.error()
+        authorization_window.close()
+        return login
+    
+    def _initial_manager_account_registration(self) -> None:
         if '__manager_login__' not in self._credentials or self._credentials['__manager_login__'] not in self._credentials:
-            reg_flag = True
             inappropriate_login_flag = False
             inappropriate_name_flag = False
             inappropriate_email_flag = False
-            name_to_show = ''
-            login_to_show = 'manager'
-            position_to_show = 'Менеджер'
-            email_to_show = ''
-            while reg_flag:
-                reg_manager_window = ManagerRegistrationWindow(
-                    inappropriate_login_flag=inappropriate_login_flag, 
-                    inappropriate_name_flag=inappropriate_name_flag, 
-                    inappropriate_email_flag=inappropriate_email_flag,
-                    login_to_show=login_to_show, 
-                    name_to_show=name_to_show,
-                    position_to_show=position_to_show,
-                    email_to_show=email_to_show
-                )
-                login, pass_md5, name, position, email = reg_manager_window.open()
+            reg_manager_window = ManagerRegistrationWindow()
+            reg_manager_window.open()
+            while True:
+                login, pass_md5, name, position, email = reg_manager_window.read()
 
                 # Check login
-                if login != '__manager_login__':
-                    inappropriate_login_flag = False
-                else:
-                    login_to_show = login
-                    inappropriate_login_flag = True
+                inappropriate_login_flag = login == '__manager_login__'
                 
-                # Check name
-                name_to_show = name
-                name = name.split(' ')
-                inappropriate_name_flag = False
-                if len(name):
-                    for elem in name:
-                        inappropriate_name_flag |= not elem.isalpha()
-                else:
-                    inappropriate_name_flag = True
-                if not inappropriate_name_flag:
-                    temp_name = ''
-                    for elem in name:
-                        temp_name += elem.capitalize() + ' '
-                    name = temp_name[:-1]
-                    del temp_name
-                    name_to_show = name
+                # Check and update name
+                name, inappropriate_name_flag = self._check_and_update_name(name)
+                reg_manager_window.update('name', name)                
                 
-                # Set position to show
-                position_to_show = position
-
-                # Check email
-                email_to_show = email
-                email = email.split('@')
-                if len(email) == 2:
-                    email[-1] = email[-1].split('.')
-                    if len(email[1]) == 2 and email[0] and email[1][0] and email[1][1]:
-                        temp_email = email[0].lower() + '@' + email[1][0].lower() + '.' + email[1][1].lower()
-                        email = temp_email
-                        del temp_email
-                        email_to_show = email
-                        inappropriate_email_flag = False
-                    else:
-                        inappropriate_email_flag = True
-                else:
-                    inappropriate_email_flag = True
+                # Check and update email
+                email, inappropriate_email_flag = self._check_and_update_email(email)
+                reg_manager_window.update('email', email)
 
                 # Check all errors
                 if not inappropriate_login_flag and not inappropriate_name_flag and not inappropriate_email_flag:
-                    reg_flag = False
                     self._credentials['__manager_login__'] = login
                     self._credentials[login] = pass_md5
                     self._update_credentials()
@@ -99,31 +78,64 @@ class ProjectManagement():
                     self._users_data[login]['email'] = email
                     self._users_data[login]['role'] = 'manager'
                     self._update_users_data()
-                
+                    break
+                else:
+                    error_message = self._create_error_message(inappropriate_login_flag, inappropriate_name_flag, inappropriate_email_flag)
+                    reg_manager_window.error(error_message=error_message)
+            reg_manager_window.close()
+    
+    def _check_and_update_name(self, name: str) -> tuple:
+        # For empty name
+        if not name:
+            return name, False
         
-        # Authorization
-        authorization_window = AuthorizationWindow()
-        authorization_window.open()
-        while True:
-            login, pass_md5 = authorization_window.read()
-            if login in self._credentials and self._credentials[login] == pass_md5:
-                break
+        # Check if all symbols are alphabetic and splitted with spaces
+        name = name.split(' ')
+        inappropriate_name_flag = False
+        if len(name):
+            for elem in name:
+                inappropriate_name_flag |= not elem.isalpha()
+        else:
+            inappropriate_name_flag = True
+        
+        # Make name to be perceptually appropriate
+        temp_name = ''
+        for elem in name:
+            if elem:
+                temp_name += elem.capitalize() + ' '
+        name = temp_name[:-1]
+
+        return name, inappropriate_name_flag
+
+    def _check_and_update_email(self, email: str) -> tuple:
+        temp_email = email.split('@')
+        if len(temp_email) == 2:
+            temp_email[-1] = temp_email[-1].split('.')
+            if len(temp_email[1]) == 2 and temp_email[0] and temp_email[1][0] and temp_email[1][1]:
+                temp_email = temp_email[0].lower() + '@' + temp_email[1][0].lower() + '.' + temp_email[1][1].lower()
+                email = temp_email
+                return email, False
             else:
-                authorization_window.error()
-        authorization_window.close()
+                return email.lower(), True
+        else:
+            return email.lower(), True
 
-        # Profile window
-        if self._users_data[login]['role'] == 'manager':
-            current_user = Manager(**self._users_data[login])
-        profile_window = ProfileWindow(current_user)
-        profile_window.open()
+    def _create_error_message(self, inappropriate_login_flag: bool, inappropriate_name_flag: bool, inappropriate_email_flag: bool) -> str:
+        error_message = ''
+        if inappropriate_login_flag:
+            error_message += 'Ошибка: этот логин использовать нельзя!\n'
+        if inappropriate_name_flag:
+            error_message += 'Ошибка: Имя должно содержать только буквы!\n'
+        if inappropriate_email_flag:
+            error_message += 'Ошибка: E-mail указан неверно!'
+        return error_message
 
-    def _update_credentials(self):
+    def _update_credentials(self) -> None:
         with open(self._credentials_path, 'wb') as f:
             data = pickle.dumps(self._credentials)
             f.write(data)       
     
-    def _update_users_data(self):
+    def _update_users_data(self) -> None:
         with open(self._users_data_path, 'wb') as f:
             data = pickle.dumps(self._users_data)
             f.write(data)       
