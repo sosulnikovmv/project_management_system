@@ -164,7 +164,7 @@ class RegistrationWindow(AppWindow):
                 return event, None, None, None, None, None
             elif event == 'submit':
                 pass_md5 = hashlib.md5(bytes(values['pass'].encode())).hexdigest()
-                return values['login'], pass_md5, values['name'], values['position'], values['email']
+                return event, values['login'], pass_md5, values['name'], values['position'], values['email']
 
     def error(self, error_message: str) -> None:
         self._window.Find('error_message', error_message).Update(value=error_message)

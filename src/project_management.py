@@ -5,6 +5,7 @@ import pickle
 
 class ProjectManagement():
     def __init__(self) -> None:
+        if not os.path.exists('./data'): os.mkdir('./data')
         self._credentials_path = os.path.join('./data', 'credentials.dat')
         self._credentials = dict()
         self._users_data_path = os.path.join('./data', 'users_data.dat')
