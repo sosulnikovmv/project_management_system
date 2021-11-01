@@ -7,6 +7,10 @@ class AppWindow():
         self._app_name = 'Менеджер проектов'
     def open(self):
         pass
+    def read(self):
+        pass
+    def close():
+        pass
 
 class AuthorizationWindow(AppWindow):
     def __init__(self, wrong_login_or_pw_flag=False) -> None:
@@ -24,25 +28,33 @@ class AuthorizationWindow(AppWindow):
                 sg.Text('Пароль\t'), sg.InputText(key='pass', password_char='*')
             ],
             [
-                sg.Text(error_message, text_color='orange')
+                sg.Text(error_message, text_color='orange', key='error_message')
             ],
             [
-                sg.Submit('Вход'), sg.Exit('Выход')
+                sg.Submit('Вход', key='submit'), sg.Exit('Выход', key='exit')
             ]
         ]
         super(AuthorizationWindow, self).__init__(layouts)
 
     def open(self):
-        window = sg.Window(self._app_name, self._layouts)
+        self.window = sg.Window(self._app_name, self._layouts)
+
+    def read(self):
         while True:
-            event, values = window.read()
-            if event == 'Выход' or window.was_closed():
+            event, values = self.window.read()
+            if event == 'exit' or self.window.was_closed():
                 exit()
-            elif event == 'Вход':
+            elif event == 'submit':
                 pass_md5 = hashlib.md5(bytes(values['pass'].encode())).hexdigest()
                 login = values['login']
-                window.close()
                 return login, pass_md5
+    
+    def error(self):
+        self.window.Elem('error_message').Update(value='Ошибка: неверный логин или пароль!')
+
+    def close(self):
+        self.window.close()
+
 
 class ProfileWindow(AppWindow):
     def __init__(self, user) -> None:
@@ -50,7 +62,7 @@ class ProfileWindow(AppWindow):
         if self.user.role == 'manager':
             layouts = [
                 [
-                    sg.Text('Добро пожаловать, {}!'.format(self.user.name))
+                    sg.Text('Здравствуйте, {}!'.format(self.user.name))
                 ],
                 [
                     sg.Button('Создать пользователя', key='create_user')
@@ -71,7 +83,7 @@ class ProfileWindow(AppWindow):
         elif self.user.role == 'employee':
             layouts = [
                 [
-                    sg.Text('Добро пожаловать, {}!'.format(self.user.name))
+                    sg.Text('Здравствуйте, {}!'.format(self.user.name))
                 ],
                 [
                     sg.Button('Проекты', key='projects')

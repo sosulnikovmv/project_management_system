@@ -102,15 +102,15 @@ class ProjectManagement():
                 
         
         # Authorization
-        auth_flag = True
-        wrong_login_or_pw_flag = False
-        while auth_flag:
-            authorization_window = AuthorizationWindow(wrong_login_or_pw_flag=wrong_login_or_pw_flag)
-            login, pass_md5 = authorization_window.open()
+        authorization_window = AuthorizationWindow()
+        authorization_window.open()
+        while True:
+            login, pass_md5 = authorization_window.read()
             if login in self._credentials and self._credentials[login] == pass_md5:
-                auth_flag = False
+                break
             else:
-                wrong_login_or_pw_flag = True
+                authorization_window.error()
+        authorization_window.close()
 
         # Profile window
         if self._users_data[login]['role'] == 'manager':
