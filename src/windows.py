@@ -5,6 +5,7 @@ class AppWindow():
     def __init__(self, layouts: list) -> None:
         self._layouts = layouts
         self._app_name = 'Менеджер проектов'
+        self._size = (640, 420)
 
     def open(self):
         pass
@@ -16,6 +17,9 @@ class AppWindow():
         pass
 
     def error(self):
+        pass
+
+    def update(self):
         pass
 
 class AuthorizationWindow(AppWindow):
@@ -40,7 +44,7 @@ class AuthorizationWindow(AppWindow):
         super(AuthorizationWindow, self).__init__(layouts)
 
     def open(self):
-        self._window = sg.Window(self._app_name, self._layouts, size=(416, 240), resizable=True)
+        self._window = sg.Window(self._app_name, self._layouts, size=self._size, resizable=True)
 
     def read(self):
         while True:
@@ -57,7 +61,6 @@ class AuthorizationWindow(AppWindow):
 
     def close(self):
         self._window.close()
-
 
 class ProfileWindow(AppWindow):
     def __init__(self, user) -> None:
@@ -77,7 +80,7 @@ class ProfileWindow(AppWindow):
                     sg.Button('Задачи', key='tasks')
                 ],
                 [
-                    sg.Button('Исполнители', key='employees')
+                    sg.Button('Сотрудники', key='employees')
                 ],
                 [
                     sg.Exit('Выход', key='logout')
@@ -103,7 +106,7 @@ class ProfileWindow(AppWindow):
         super(ProfileWindow, self).__init__(layouts)
 
     def open(self) -> None:
-        self._window = sg.Window(self._app_name, self._layouts, size=(416, 240), resizable=True)
+        self._window = sg.Window(self._app_name, self._layouts, size=self._size, resizable=True)
     
     def read(self) -> str:
         while True:
@@ -150,7 +153,7 @@ class RegistrationWindow(AppWindow):
         super(RegistrationWindow, self).__init__(layouts)
     
     def open(self) -> None:
-        self._window = sg.Window(self._app_name, self._layouts, size=(416, 240), resizable=True)        
+        self._window = sg.Window(self._app_name, self._layouts, size=self._size, resizable=True)        
     
     def read(self):
         while True:
@@ -171,3 +174,42 @@ class RegistrationWindow(AppWindow):
 
     def update(self, field: str, value: str) -> None:
         self._window.Find(field).Update(value=value)
+    
+class ListOfEmployeesWindow(AppWindow):
+    def __init__(self, users_data: dict) -> None:
+        
+        list_of_names = [[users_data[login][key] for key in users_data[login]] for login in users_data]
+        header = ['Login', 'Имя', 'Должность', 'E-mail', 'Роль']
+        layouts = [
+            [
+                sg.Text('Список сотрудников')
+            ],
+            [
+                #sg.LBox(table, expand_x=True, expand_y=True, horizontal_scroll=True),
+                sg.Table(list_of_names, headings=header, vertical_scroll_only=False, expand_x=True, expand_y=True)
+            ],
+            [
+                sg.Exit('В главное меню', key='main_menu')
+            ]
+        ]
+        super().__init__(layouts)
+    
+    def open(self):
+        self._window = sg.Window(self._app_name, self._layouts, size=self._size, resizable=True)
+
+    def read(self):
+        while True:
+            event, _ = self._window.read()
+            if event == 'exit' or self._window.was_closed():
+                exit()
+            elif event == 'main_menu':
+                return event
+    
+    def error(self):
+        return super().error()
+    
+    def close(self):
+        self._window.close()
+    
+    def update(self):
+        return super().update()

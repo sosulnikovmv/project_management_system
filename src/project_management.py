@@ -1,4 +1,4 @@
-from .windows import AuthorizationWindow, ProfileWindow, RegistrationWindow
+from .windows import AuthorizationWindow, ProfileWindow, RegistrationWindow, ListOfEmployeesWindow
 from .user import Manager, Employee
 import os
 import pickle
@@ -48,9 +48,19 @@ class ProjectManagement():
             event = self._create_user(role='employee')
             return 'main_menu'
         
+        # Print employees list
+        elif event == 'employees':
+            return self._employees_list(role=self._current_user.role)
+        
         else:
             raise NotImplementedError
         
+    def _main_menu(self, user):
+        profile_window = ProfileWindow(user)
+        profile_window.open()
+        event = profile_window.read()
+        profile_window.close()
+        return event
 
     def _authorization(self) -> str:
         authorization_window = AuthorizationWindow()
@@ -115,12 +125,14 @@ class ProjectManagement():
         registration_window.close()
         return event
 
-    def _main_menu(self, user):
-        profile_window = ProfileWindow(user)
-        profile_window.open()
-        event = profile_window.read()
-        profile_window.close()
-        return event
+    def _employees_list(self, role):
+        list_of_employees_window = ListOfEmployeesWindow(self._users_data)
+        list_of_employees_window.open()
+        while True:
+            event = list_of_employees_window.read()
+            if event == 'main_menu':
+                list_of_employees_window.close()
+                return event
 
     def _check_and_update_name(self, name: str) -> tuple:
         # For empty name
